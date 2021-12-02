@@ -1,5 +1,6 @@
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 
 
 def part_one():
@@ -10,17 +11,8 @@ def part_one():
 
 def part_two():
     my_arr = np.loadtxt(Path(__file__).parent / "input.txt")
-    my_arr_test = np.array([199,
-                        200,
-                        208,
-                        210,
-                        200,
-                        207,
-                        240,
-                        269,
-                        260,
-                        263])
-    avg = [sum(my_arr[i:i+3]) for i in np.arange(len(my_arr)-2)]
+    # my_arr_test = np.array([199, 200, 208, 210, 200, 207, 240, 269, 260, 263])
+    avg = [sum(my_arr[i : i + 3]) for i in np.arange(len(my_arr) - 2)]
     diff = np.diff(avg)
     print(diff, len(diff))
     print("Increasing rolling window: ", sum(diff > 0))
