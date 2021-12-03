@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def binary2decimal(binary: str) -> int:
+def binary2decimal(binary) -> int:
     """Convert binary code to decimal"""
     number = 0
     exponent = 1
@@ -12,21 +12,15 @@ def binary2decimal(binary: str) -> int:
 
 
 def part_one(arr_np):
-
-    print(arr_np)
-    print(arr_np.shape)
     occurrences = arr_np.sum(0)
-    print(occurrences)
-    most_common = ["1" if amount >= len(arr_np) / 2 else "0" for amount in occurrences]
-    least_common = ["0" if amount >= len(arr_np) / 2 else "1" for amount in occurrences]
-    most_common = "".join(most_common)
-    least_common = "".join(least_common)
+    most_common = [1 if amount >= len(arr_np) / 2 else 0 for amount in occurrences]
+    least_common = [0 if amount >= len(arr_np) / 2 else 1 for amount in occurrences]
 
     assert binary2decimal("10110") == 22
 
-    print("most_common:", most_common, "in decimal:", binary2decimal(most_common))
-    print("least_common:", least_common, "in decimal:", binary2decimal(least_common))
-    print("Result: ", binary2decimal(most_common) * binary2decimal(least_common))
+    print("gamma_rate:", most_common, "in decimal:", binary2decimal(most_common))
+    print("epsilon_rate:", least_common, "in decimal:", binary2decimal(least_common))
+    print("power consumption: ", binary2decimal(most_common) * binary2decimal(least_common))
 
 
 def get_oxygen_rating(arr_np):
@@ -74,4 +68,5 @@ if __name__ == "__main__":
         arr_np[i] = list(binary)
 
     part_one(arr_np)
+    print()
     part_two(arr_np)
