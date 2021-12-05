@@ -1,7 +1,9 @@
-import numpy as np
-from pathlib import Path
-from itertools import groupby
 import re
+from itertools import groupby
+from pathlib import Path
+
+import numpy as np
+
 
 def play_bingo(drawn_numbers, bingo_boards):
     # One after the other draw a number and "activate" it
@@ -37,8 +39,9 @@ def play_bingo(drawn_numbers, bingo_boards):
                 print(f"Total: {unactivated_sum * number}")
                 break
 
-        completed_board_indices = list(set(list(np.where((bingo_mask.sum(1) == 5))[0])
-                                           + list(np.where((bingo_mask.sum(2) == 5))[0])))
+        completed_board_indices = list(
+            set(list(np.where((bingo_mask.sum(1) == 5))[0]) + list(np.where((bingo_mask.sum(2) == 5))[0]))
+        )
         if len(completed_board_indices) == 99:
             print("99 boards completed. Next one is the last one.")
             # copy the mask of the last one
@@ -49,10 +52,9 @@ def play_bingo(drawn_numbers, bingo_boards):
             do_part_two_now = True
 
 
-
 def create_bingo_boards(input_list):
     # a new bingo board is recognized by a sole linebreak
-    splitted_boards = (list(g) for _, g in groupby(input_list, key='\n'.__ne__))
+    splitted_boards = (list(g) for _, g in groupby(input_list, key="\n".__ne__))
     # remove "\n"
     splitted_boards = [board for board in splitted_boards if "\n" not in board]
 
@@ -60,7 +62,7 @@ def create_bingo_boards(input_list):
     bingo_boards_np = np.zeros((len(splitted_boards), 5, 5), dtype=int)
     for i, board in enumerate(splitted_boards):
         # convert every row to an array from the string
-        bingo_boards_np[i] = np.stack([np.array(re.findall("\d+", row), dtype=int) for row in board])
+        bingo_boards_np[i] = np.stack([np.array(re.findall(r"\d+", row), dtype=int) for row in board])
     return bingo_boards_np
 
 

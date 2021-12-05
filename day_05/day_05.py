@@ -1,7 +1,8 @@
-from pathlib import Path
 import re
-import numpy as np
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def create_ground_floor_map(coordinates, part_two=False):
@@ -10,13 +11,13 @@ def create_ground_floor_map(coordinates, part_two=False):
     for row in coordinates:
         x1, y1, x2, y2 = row
         if x1 == x2:
-            ground_floor[min(y1, y2):max(y1, y2) + 1, x1] += 1
+            ground_floor[min(y1, y2) : max(y1, y2) + 1, x1] += 1
         elif y1 == y2:
-            ground_floor[y1, min(x1, x2):max(x1, x2) + 1] += 1
+            ground_floor[y1, min(x1, x2) : max(x1, x2) + 1] += 1
         elif part_two:
             # When lines are diagonal
-            diff = abs(x1-x2)
-            for i in range(diff+1):
+            diff = abs(x1 - x2)
+            for i in range(diff + 1):
                 # When the diagonals are increasing then i increases for the coordinate
                 y_ind = i if y2 > y1 else -i
                 x_ind = i if x2 > x1 else -i
@@ -29,7 +30,7 @@ if __name__ == "__main__":
     with open(Path(__file__).parent / "input_test.txt", "r") as f:
         coordinates_raw = f.readlines()
         # print(coordinates_raw)
-        coordinates = np.stack([np.array(re.findall("\d+", row), dtype=int) for row in coordinates_raw])
+        coordinates = np.stack([np.array(re.findall(r"\d+", row), dtype=int) for row in coordinates_raw])
         print("Test coordinates:")
         print(coordinates)
 
@@ -46,15 +47,15 @@ if __name__ == "__main__":
     plt.show()
     print(result)
     assert result == 12
-    assert np.sum(ground_floor==1) == 27
-    assert np.sum(ground_floor==3) == 2
+    assert np.sum(ground_floor == 1) == 27
+    assert np.sum(ground_floor == 3) == 2
     print()
 
     # When we are here the tests have not failed and we should get the correct result
     with open(Path(__file__).parent / "input.txt", "r") as f:
         coordinates_raw = f.readlines()
         # print(coordinates_raw)
-        coordinates = np.stack([np.array(re.findall("\d+", row), dtype=int) for row in coordinates_raw])
+        coordinates = np.stack([np.array(re.findall(r"\d+", row), dtype=int) for row in coordinates_raw])
         print("Real input:")
         print(coordinates)
     ground_floor = create_ground_floor_map(coordinates)
@@ -70,4 +71,3 @@ if __name__ == "__main__":
     plt.show()
     result = np.sum(ground_floor >= 2)
     print("Horizontal, vertical and diagonal: ", result)
-
