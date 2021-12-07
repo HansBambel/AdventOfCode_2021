@@ -1,17 +1,16 @@
 from pathlib import Path
 
 import numpy as np
-from tqdm import tqdm
 
 
 def get_fuel_count_for_position(crab_submarines, part_two=False):
     fuel_costs = np.zeros((np.max(crab_submarines)))
-    fuel_per_change = range(np.max(crab_submarines))
-    for pos in tqdm(range(np.max(crab_submarines))):
+    fuel_per_change = np.cumsum(range(np.max(crab_submarines) + 1))
+    for pos in range(np.max(crab_submarines)):
         if not part_two:
             fuel_costs[pos] = np.sum(abs(crab_submarines - pos))
         else:
-            fuel_costs[pos] = np.sum([np.sum(fuel_per_change[: change + 1]) for change in abs(crab_submarines - pos)])
+            fuel_costs[pos] = np.sum([fuel_per_change[change] for change in abs(crab_submarines - pos)])
     return fuel_costs
 
 
