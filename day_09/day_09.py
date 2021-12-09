@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -26,8 +27,23 @@ def get_lowest_points(ocean_floor):
     return lowest_points
 
 
+def get_lowest_points_pure_np(ocean_floor):
+    # Interesting solution taken from
+    # https://www.reddit.com/r/adventofcode/comments/rcjgu6/despite_having_used_python_for_years_today_was
+    m = np.pad(ocean_floor, pad_width=1, constant_values=9)
+    # get the points where all neighbors are higher
+    return ((m < np.roll(m, 1, 0)) &
+            (m < np.roll(m, -1, 0)) &
+            (m < np.roll(m, 1, 1)) &
+            (m < np.roll(m, -1, 1)))[
+        1:-1, 1:-1
+    ]  # Because earlier it was padded we need to remove the padding again
+
+
 def calc_risk_level(ocean_floor) -> int:
     lowest_points = get_lowest_points(ocean_floor)
+    lowest_points = get_lowest_points_pure_np(ocean_floor)
+
     return np.sum(ocean_floor * lowest_points) + np.sum(lowest_points)
 
 
@@ -69,6 +85,8 @@ with open(Path(__file__).parent / "input.txt", "r") as f:
     ocean_floor_raw = f.readlines()
 
 ocean_floor = np.array([list(line.strip()) for line in ocean_floor_raw], dtype=int)
+plt.imshow(ocean_floor)
+plt.show()
 print("Risk level:", calc_risk_level(ocean_floor))
 basins = get_biggest_basin_size(ocean_floor)
 print("Multiplied biggest basins:", np.prod(basins))
