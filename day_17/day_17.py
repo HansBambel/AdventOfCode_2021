@@ -30,8 +30,8 @@ def get_highest_y_value(y_from: int, y_to: int, x_from: int, x_to: int) -> Tuple
     highest_y_value = 0
     found_velocities = 0
 
-    min_x_velocity = 100
-    max_y_velocity = 200
+    min_x_velocity = 250
+    max_y_velocity = 800
     for y in tqdm(range(max_y_velocity, -max_y_velocity, -1)):
         # if not, decrease x until 0
         for x in range(min_x_velocity, 0, -1):
