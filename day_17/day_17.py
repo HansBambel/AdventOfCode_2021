@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 def check_if_hit(coords: Tuple[int, int], y_from: int, y_to: int, x_from: int, x_to: int) -> bool:
     # Y and X
-    return (coords[0] in range(y_to, y_from + 1)) and coords[1] in range(x_from, x_to)
+    return (coords[0] in range(y_to, y_from + 1)) and coords[1] in range(x_from, x_to + 1)
 
 
 def project_path(velocity: Tuple[int, int], y_to: int) -> List[Tuple[int, int]]:
@@ -31,25 +31,17 @@ def get_highest_y_value(y_from: int, y_to: int, x_from: int, x_to: int) -> Tuple
     found_velocities = 0
 
     min_x_velocity = 100
-    # now increase y and check if still hits
     max_y_velocity = 200
     for y in tqdm(range(max_y_velocity, -max_y_velocity, -1)):
         # if not, decrease x until 0
-        velocities = [(y, x) for x in range(min_x_velocity, 0, -1)]
-        paths = list(map(project_path_y_to, velocities))
-        hit_paths = [list(map(check_if_hit_ranges, path)) for path in paths]
-        # if any path has hit -> go through all of them and find the specific ones
-        velocities_hitting = sum([sum(path_hit) for path_hit in hit_paths])
-        found_velocities += velocities_hitting
-
-        if velocities_hitting > 0:
-            for i, hit_path in enumerate(hit_paths):
-                # If path has hit target add it to the found velocities
-                if sum(hit_path) > 0:
-                    # get best x
-                    if highest_y_value == 0:
-                        path = project_path_y_to(velocities[i])
-                        highest_y_value = max([c[0] for c in path])
+        for x in range(min_x_velocity, 0, -1):
+            # project the path and then check if the target is hit at any step
+            path_hits = any([check_if_hit_ranges(coords) for coords in project_path_y_to((y, x))])
+            # if a path hits with this velocity then increase the counter
+            found_velocities += path_hits
+            if path_hits and highest_y_value == 0:
+                path = project_path_y_to((y, x))
+                highest_y_value = max([c[0] for c in path])
 
     return highest_y_value, found_velocities
 
