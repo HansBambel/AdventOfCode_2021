@@ -1,4 +1,3 @@
-from itertools import chain
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -14,8 +13,10 @@ class FishNum:
         self.right = in_list[1] if isinstance(in_list[1], int) else FishNum(in_list[1], parent=self)
 
     def __len__(self) -> int:
-        left_max = 0
-        right_max = 0
+        if isinstance(self.left, int) and isinstance(self.right, int):
+            return 0
+        left_max = 1
+        right_max = 1
         if type(self.left) == FishNum:
             left_max += len(self.left)
         if type(self.right) == FishNum:
@@ -27,58 +28,123 @@ class FishNum:
         right_num = self.right if (isinstance(self.right, int)) else self.right.magnitude()
         return 3 * left_num + 2 * right_num
 
-    def trickle_up(self, number: int, direction: str):
-        if direction == "right":
-            if self.parent is None and self.left:
-                return
-            if type(self.left) == FishNum:
-                self.left.trickle_down(number, direction=direction)
+    def trickle_up(self, number: int, direction: str, from_leaf: "FishNum"):
+        if self.parent is not None:
+            if direction == "left":
+                if self.left == from_leaf:
+                    self.parent.trickle_up(number, direction, self)
+                else:
+                    if isinstance(self.left, int):
+                        self.left += number
+                    else:
+                        self.trickle_down(number, direction="right")
             else:
-                self.parent.trickle_up(number, direction)
+                if self.right == from_leaf:
+                    self.parent.trickle_up(number, direction, self)
+                else:
+                    if isinstance(self.right, int):
+                        self.right += number
+                    else:
+                        self.trickle_down(number, direction="left")
+        else:
+            # We are at the top node
+            if direction == "left":
+                if self.right == from_leaf:
+                    if isinstance(self.left, int):
+                        self.left += number
+                    else:
+                        self.left.trickle_down(number, "right")
+            else:
+                if self.left == from_leaf:
+                    if isinstance(self.right, int):
+                        self.right += number
+                    else:
+                        self.right.trickle_down(number, "left")
 
     def trickle_down(self, number: int, direction: str):
         if direction == "left":
-            leaf = self.left
-            while not isinstance(leaf, int):
-                leaf = leaf.left
-            leaf.left += number
+            if isinstance(self.left, int):
+                self.left += number
+            else:
+                self.left.trickle_down(number, direction)
         else:
-            leaf = self.right
-            while not isinstance(leaf, int):
-                leaf = leaf.right
-            leaf.right += number
+            if isinstance(self.right, int):
+                self.right += number
+            else:
+                self.right.trickle_down(number, direction)
 
     def explode(self) -> bool:
+        # If next one is about to explode
         if len(self) == 1:
-            if len(self.left) == 0:
-                self.trickle_down(self.left.right, direction="left")
-                self.trickle_up(self.left.left, direction="right")
+            # left one will explode
+            if isinstance(self.left, FishNum) and (len(self.left) == 0):
+                if isinstance(self.right, int):
+                    self.right += self.left.right
+                else:
+                    # trickle down the right node to the left side
+                    self.right.trickle_down(self.left.right, direction="left")
+                self.parent.trickle_up(self.left.left, direction="left", from_leaf=self)
                 self.left = 0
-
+            # right one will explode
+            else:
+                if isinstance(self.left, int):
+                    self.left += self.right.left
+                else:
+                    self.left.trickle_down(self.right.left, direction="left")
+                self.parent.trickle_up(self.right.right, direction="right", from_leaf=self)
+                self.right = 0
             return True
         else:
-            exploded = self.left.explode()
-            if not exploded:
-                self.right.explode()
-            return exploded
-
-    def add_left(self, to_add: int):
-        pass
+            # Not yet found the correct exploding pair
+            # Expand left first
+            if isinstance(self.left, FishNum) and (len(self.left) == len(self) - 1):
+                exploded = self.left.explode()
+                if exploded == False:
+                    if isinstance(self.right, FishNum):
+                        exploded = self.right.explode()
+                    else:
+                        return False
+                return exploded
+            # Right one gets expanded
+            elif isinstance(self.right, FishNum):
+                exploded = self.right.explode()
+                if exploded == False:
+                    if isinstance(self.left, FishNum):
+                        exploded = self.left.explode()
+                    else:
+                        return False
+                return exploded
+            else:
+                return False
 
     def reduce(self):
         while True:
             # explode
-            change = self.explode()
-            if change:
-                continue
+            if len(self) >= 4:
+                change = self.explode()
+                if change:
+                    continue
             change = self.split()
             if not change:
                 break
+        return self
 
     def split(self) -> bool:
-        if any(list(chain(*self.to_list())) >= 10):
-            return self.split().reduce()
-        pass
+        if isinstance(self.left, int):
+            if self.left >= 10:
+                self.left = FishNum([self.left // 2, (self.left + 1) // 2], self)
+                return True
+        else:
+            if self.left.split():
+                return True
+        # When we are here we have not split in the left part of the tree yet
+        if isinstance(self.right, int):
+            if self.right >= 10:
+                self.right = FishNum([self.right // 2, (self.right + 1) // 2], self)
+                return True
+        else:
+            return self.right.split()
+        return False
 
     def to_list(self) -> List:
         return [
@@ -86,10 +152,28 @@ class FishNum:
             self.right if type(self.right) == int else self.right.to_list(),
         ]
 
-    def add(self, other: "FishNum"):
+    def add(self, other: "FishNum") -> "FishNum":
         return FishNum([self.to_list(), other.to_list()]).reduce()
 
 
+test_explode = [
+    ([[[[[9, 8], 1], 2], 3], 4], [[[[0, 9], 2], 3], 4]),
+    ([7, [6, [5, [4, [3, 2]]]]], [7, [6, [5, [7, 0]]]]),
+    ([[6, [5, [4, [3, 2]]]], 1], [[6, [5, [7, 0]]], 3]),
+    ([[3, [2, [1, [7, 3]]]], [6, [5, [4, [3, 2]]]]], [[3, [2, [8, 0]]], [9, [5, [4, [3, 2]]]]]),
+    ([[3, [2, [8, 0]]], [9, [5, [4, [3, 2]]]]], [[3, [2, [8, 0]]], [9, [5, [7, 0]]]]),
+]
+for case in test_explode:
+    key, value = case[0], case[1]
+    fish = FishNum(key)
+    fish.explode()
+    assert fish.to_list() == value
+
+# Test reduce
+fish = FishNum([[[[4, 3], 4], 4], [7, [[8, 4], 9]]])
+assert fish.add(FishNum([1, 1])).to_list() == [[[[0, 7], 4], [[7, 8], [6, 0]]], [8, 1]]
+
+print("Start with whole example")
 data = Path(__file__).with_name("input_ex.txt").read_text()
 current_number = ""
 for line in data.split("\n"):
@@ -101,12 +185,7 @@ for line in data.split("\n"):
 
 assert current_number.to_list() == [[[[8, 7], [7, 7]], [[8, 6], [7, 7]]], [[[0, 7], [6, 6]], [8, 7]]]
 
-assert FishNum([[[[[9, 8], 1], 2], 3], 4]).explode() == [[[[0, 9], 2], 3], 4]
-assert FishNum([7, [6, [5, [4, [3, 2]]]]]).explode() == [7, [6, [5, [7, 0]]]]
-assert FishNum([[6, [5, [4, [3, 2]]]], 1]).explode() == [[6, [5, [7, 0]]], 3]
-assert FishNum([[3, [2, [1, [7, 3]]]], [6, [5, [4, [3, 2]]]]]).explode() == [[3, [2, [8, 0]]], [9, [5, [4, [3, 2]]]]]
-assert FishNum([[3, [2, [8, 0]]], [9, [5, [4, [3, 2]]]]]).explode() == [[3, [2, [8, 0]]], [9, [5, [7, 0]]]]
-
+print("Check magnitude")
 assert FishNum([[1, 2], [[3, 4], 5]]).magnitude() == 143
 assert FishNum([[[[0, 7], 4], [[7, 8], [6, 0]]], [8, 1]]).magnitude() == 1384
 assert FishNum([[[[1, 1], [2, 2]], [3, 3]], [4, 4]]).magnitude() == 445
@@ -114,7 +193,7 @@ assert FishNum([[[[3, 0], [5, 3]], [4, 4]], [5, 5]]).magnitude() == 791
 assert FishNum([[[[5, 0], [7, 4]], [5, 5]], [6, 6]]).magnitude() == 1137
 assert FishNum([[[[8, 7], [7, 7]], [[8, 6], [7, 7]]], [[[0, 7], [6, 6]], [8, 7]]]).magnitude() == 3488
 
-
+print("Start with example 2")
 data = Path(__file__).with_name("input_ex2.txt").read_text()
 current_number = ""
 for line in data.split("\n"):

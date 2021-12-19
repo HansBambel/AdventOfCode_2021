@@ -27,5 +27,5 @@ exclude =   .git,
             migrations,
             analysen
 # Allow maximum code complexity of 10
-max-complexity = 10
+max-complexity = 15
 max-line-length = 120
