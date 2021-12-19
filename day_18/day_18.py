@@ -28,54 +28,69 @@ class FishNum:
         return str(self.to_list())
 
     def magnitude(self) -> int:
+        # Recursively get the magnitude
         left_num = self.left if (isinstance(self.left, int)) else self.left.magnitude()
         right_num = self.right if (isinstance(self.right, int)) else self.right.magnitude()
         return 3 * left_num + 2 * right_num
 
-    def trickle_up(self, number: int, direction: str, from_leaf: "FishNum"):
+    def _trickle_up(self, number: int, direction: str, from_leaf: "FishNum"):
         if self.parent is not None:
+            # When we can still go further up
             if direction == "left":
+                # When we come already from the left -> go further up
                 if self.left == from_leaf:
-                    self.parent.trickle_up(number, direction, self)
+                    self.parent._trickle_up(number, direction, self)
                 else:
+                    # When there is something to the left
                     if isinstance(self.left, int):
+                        # when it is a number -> easy, add number
                         self.left += number
                     else:
-                        self.left.trickle_down(number, direction="right")
+                        # when the left is a tree -> trickle down to the right
+                        self.left._trickle_down(number, direction="right")
             else:
+                # When we come already from the right -> go further up
                 if self.right == from_leaf:
-                    self.parent.trickle_up(number, direction, self)
+                    self.parent._trickle_up(number, direction, self)
                 else:
+                    # When there is something to the right
                     if isinstance(self.right, int):
                         self.right += number
                     else:
-                        self.right.trickle_down(number, direction="left")
+                        # The right part is a tree -> trickle down to the left
+                        self.right._trickle_down(number, direction="left")
         else:
-            # We are at the top node
+            # We are at the top node -> reverse the direction when trickling down now
             if direction == "left":
+                # When we come from the right node then we need to trickle down the left path
                 if self.right == from_leaf:
+                    # if left node is an int -> easy, increase number, else trickle further down the left tree
                     if isinstance(self.left, int):
                         self.left += number
                     else:
-                        self.left.trickle_down(number, "right")
+                        self.left._trickle_down(number, "right")
             else:
+                # when we come from the left node then we need to trickle down the right path
                 if self.left == from_leaf:
+                    # if right node is an int -> easy, increase number, else trickle down the right tree
                     if isinstance(self.right, int):
                         self.right += number
                     else:
-                        self.right.trickle_down(number, "left")
+                        self.right._trickle_down(number, "left")
 
-    def trickle_down(self, number: int, direction: str):
+    def _trickle_down(self, number: int, direction: str):
+        # Go to the left-most node
         if direction == "left":
             if isinstance(self.left, int):
                 self.left += number
             else:
-                self.left.trickle_down(number, direction)
+                self.left._trickle_down(number, direction)
+        # Go to the right-most node
         else:
             if isinstance(self.right, int):
                 self.right += number
             else:
-                self.right.trickle_down(number, direction)
+                self.right._trickle_down(number, direction)
 
     def explode(self) -> bool:
         # If next one is about to explode
@@ -86,16 +101,16 @@ class FishNum:
                     self.right += self.left.right
                 else:
                     # trickle down the right node to the left side
-                    self.right.trickle_down(self.left.right, direction="left")
-                self.parent.trickle_up(self.left.left, direction="left", from_leaf=self)
+                    self.right._trickle_down(self.left.right, direction="left")
+                self.parent._trickle_up(self.left.left, direction="left", from_leaf=self)
                 self.left = 0
             # right one will explode
             else:
                 if isinstance(self.left, int):
                     self.left += self.right.left
                 else:
-                    self.left.trickle_down(self.right.left, direction="left")
-                self.parent.trickle_up(self.right.right, direction="right", from_leaf=self)
+                    self.left._trickle_down(self.right.left, direction="left")
+                self.parent._trickle_up(self.right.right, direction="right", from_leaf=self)
                 self.right = 0
             return True
         else:
@@ -213,6 +228,15 @@ for line in data.split("\n"):
         current_number = current_number.add(fish)
 assert current_number.to_list() == [[[[6, 6], [7, 6]], [[7, 7], [7, 0]]], [[[7, 7], [7, 7]], [[7, 8], [9, 9]]]]
 assert current_number.magnitude() == 4140
+
+highest_magnitude = 0
+for pair in permutations(data.split("\n"), 2):
+    num1 = eval(pair[0])
+    num2 = eval(pair[1])
+    new_fish_num = FishNum(num1).add(FishNum(num2))
+    if new_fish_num.magnitude() > highest_magnitude:
+        highest_magnitude = new_fish_num.magnitude()
+assert highest_magnitude == 3993
 
 data = Path(__file__).with_name("input.txt").read_text()
 current_number = ""
