@@ -1,3 +1,4 @@
+from itertools import permutations
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -23,6 +24,9 @@ class FishNum:
             right_max += len(self.right)
         return max(left_max, right_max)
 
+    def __str__(self):
+        return str(self.to_list())
+
     def magnitude(self) -> int:
         left_num = self.left if (isinstance(self.left, int)) else self.left.magnitude()
         right_num = self.right if (isinstance(self.right, int)) else self.right.magnitude()
@@ -37,7 +41,7 @@ class FishNum:
                     if isinstance(self.left, int):
                         self.left += number
                     else:
-                        self.trickle_down(number, direction="right")
+                        self.left.trickle_down(number, direction="right")
             else:
                 if self.right == from_leaf:
                     self.parent.trickle_up(number, direction, self)
@@ -45,7 +49,7 @@ class FishNum:
                     if isinstance(self.right, int):
                         self.right += number
                     else:
-                        self.trickle_down(number, direction="left")
+                        self.right.trickle_down(number, direction="left")
         else:
             # We are at the top node
             if direction == "left":
@@ -130,21 +134,26 @@ class FishNum:
         return self
 
     def split(self) -> bool:
+        split_done = False
         if isinstance(self.left, int):
             if self.left >= 10:
                 self.left = FishNum([self.left // 2, (self.left + 1) // 2], self)
-                return True
+                split_done = True
         else:
             if self.left.split():
-                return True
+                split_done = True
+
+        if split_done:
+            return True
         # When we are here we have not split in the left part of the tree yet
         if isinstance(self.right, int):
             if self.right >= 10:
                 self.right = FishNum([self.right // 2, (self.right + 1) // 2], self)
-                return True
+                split_done = True
         else:
-            return self.right.split()
-        return False
+            if self.right.split():
+                split_done = True
+        return split_done
 
     def to_list(self) -> List:
         return [
@@ -181,7 +190,7 @@ for line in data.split("\n"):
     if current_number == "":
         current_number = fish
     else:
-        current_number.add(fish)
+        current_number = current_number.add(fish)
 
 assert current_number.to_list() == [[[[8, 7], [7, 7]], [[8, 6], [7, 7]]], [[[0, 7], [6, 6]], [8, 7]]]
 
@@ -201,7 +210,7 @@ for line in data.split("\n"):
     if current_number == "":
         current_number = fish
     else:
-        current_number.add(fish)
+        current_number = current_number.add(fish)
 assert current_number.to_list() == [[[[6, 6], [7, 6]], [[7, 7], [7, 0]]], [[[7, 7], [7, 7]], [[7, 8], [9, 9]]]]
 assert current_number.magnitude() == 4140
 
@@ -212,6 +221,17 @@ for line in data.split("\n"):
     if current_number == "":
         current_number = fish
     else:
-        current_number.add(fish)
+        current_number = current_number.add(fish)
 
 print(current_number.magnitude())
+
+# part two
+highest_magnitude = 0
+for pair in permutations(data.split("\n"), 2):
+    num1 = eval(pair[0])
+    num2 = eval(pair[1])
+    new_fish_num = FishNum(num1).add(FishNum(num2))
+    if new_fish_num.magnitude() > highest_magnitude:
+        highest_magnitude = new_fish_num.magnitude()
+
+print("highest_magnitude", highest_magnitude)
